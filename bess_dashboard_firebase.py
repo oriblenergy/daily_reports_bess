@@ -10,7 +10,6 @@ import plotly.express as px
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 import numpy as np
-import json
 
 # Firebase imports
 import firebase_admin
@@ -106,7 +105,7 @@ def initialize_firebase():
         # Initialize Firebase
         # Try to load from Streamlit secrets first, then fall back to local file
         if 'firebase' in st.secrets:
-            firebase_config = json.loads(st.secrets['firebase'])
+            firebase_config = st.secrets['firebase']
             cred = credentials.Certificate(firebase_config)
 #        cred_path = FIREBASE_CREDENTIALS_PATH
 #        if not cred_path and 'FIREBASE_CREDENTIALS' in os.environ:
@@ -1626,4 +1625,5 @@ def main():
 # ============================================================================
 
 if __name__ == "__main__":
+
     main()
