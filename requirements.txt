@@ -2,4 +2,3 @@
    pandas
    plotly
    firebase-admin
-   json
