@@ -101,27 +101,41 @@ def initialize_firebase():
         # Check if already initialized
         if firebase_admin._apps:
             return firestore.client()
-
-        # Initialize Firebase
-        # Try to load from Streamlit secrets first, then fall back to local file
+        
+        # Try Streamlit Cloud secrets first (for deployment)
         if 'firebase' in st.secrets:
-            firebase_config = st.secrets['firebase']
-            cred = credentials.Certificate(firebase_config)
-#        cred_path = FIREBASE_CREDENTIALS_PATH
-#        if not cred_path and 'FIREBASE_CREDENTIALS' in os.environ:
-#            cred_path = os.environ['FIREBASE_CREDENTIALS']
-
-#        if not cred_path or not os.path.exists(cred_path):
-#            st.error("Firebase credentials not found. Please update FIREBASE_CREDENTIALS_PATH in the script.")
-#            return None
-
-#        cred = credentials.Certificate(cred_path)
+            # Load from Streamlit secrets
+            firebase_secrets = dict(st.secrets['firebase'])
+            
+            # Fix the private_key formatting (Streamlit escapes \n)
+            if 'private_key' in firebase_secrets:
+                firebase_secrets['private_key'] = firebase_secrets['private_key'].replace('\\n', '\n')
+            
+            cred = credentials.Certificate(firebase_secrets)
+            firebase_admin.initialize_app(cred)
+            
+            st.success("✅ Connected to Firebase (Streamlit Cloud)")
+            return firestore.client()
+        
+        # Fall back to local credentials file (for local development)
+        cred_path = FIREBASE_CREDENTIALS_PATH
+        if not cred_path and 'FIREBASE_CREDENTIALS' in os.environ:
+            cred_path = os.environ['FIREBASE_CREDENTIALS']
+        
+        if not cred_path or not os.path.exists(cred_path):
+            st.error("Firebase credentials not found. Please update FIREBASE_CREDENTIALS_PATH in the script or add to Streamlit secrets.")
+            return None
+        
+        cred = credentials.Certificate(cred_path)
         firebase_admin.initialize_app(cred)
-
+        
+        st.success("✅ Connected to Firebase (Local)")
         return firestore.client()
-
+    
     except Exception as e:
         st.error(f"Error initializing Firebase: {e}")
+        import traceback
+        st.error(traceback.format_exc())
         return None
 
 
@@ -1627,3 +1641,4 @@ def main():
 if __name__ == "__main__":
 
     main()
+
